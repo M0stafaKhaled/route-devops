@@ -1,0 +1,44 @@
+
+---
+- name: Configure UFW to allow HTTP and HTTPS traffic
+  block:
+    - name: Install UFW
+      apt:
+        name: ufw
+        state: present
+      become: true
+
+    - name: Allow HTTP traffic
+      ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+      become: true
+
+    - name: Allow HTTPS traffic
+      ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+      become: true
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+      become: true
+
+  rescue:
+    - name: UFW configuration failed
+      debug:
+        msg: "UFW configuration failed. Please check your system configuration and UFW logs."
+      when: "ansible_failed_result.results[0].msg is defined and (
+        'ufw' in ansible_failed_result.results[0].msg or
+        'firewall' in ansible_failed_result.results[0].msg)"
+  always:
+    - name: Ensure UFW service is enabled and started
+      service:
+        name: ufw
+        state: started
+        enabled: yes
+      become: true
+

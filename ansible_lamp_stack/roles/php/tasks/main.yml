@@ -1,0 +1,41 @@
+
+---
+- name: Install PHP and Apache PHP module
+  block:
+    - name: Install PHP and Apache PHP module
+      apt:
+        name:
+          - php
+          - libapache2-mod-php
+        state: present
+      become: true
+
+    - name: Ensure Apache module for PHP is enabled
+      apache2_module:
+        name: php7.4  
+        state: present
+      become: true
+      notify: restart_apache
+
+    - name: Test PHP processing
+      copy:
+        content: "<?php phpinfo(); ?>"
+        dest: /var/www/html/info.php
+      become: true
+
+  rescue:
+    - name: PHP installation failed
+      debug:
+        msg: "PHP installation failed. Please check your internet connection or repository configuration."
+      when: "ansible_failed_result.results[0].msg is defined and 'Failed to fetch' in ansible_failed_result.results[0].msg"
+    - name: Apache module enabling failed
+      debug:
+        msg: "Apache module enabling failed. Please check system logs for more details."
+      when: "ansible_failed_result.results[0].msg is defined and 'apache2_module' in ansible_failed_result.results[0].msg and 'failed' in ansible_failed_result.results[0].msg"
+  always:
+    - name: Ensure Apache service is running
+      service:
+        name: apache2
+        state: started
+      become: true
+

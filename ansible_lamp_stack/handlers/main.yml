@@ -1,0 +1,28 @@
+
+- block:
+
+    - name: Restart Apache
+
+      service:
+
+        name: apache2
+
+        state: restarted
+
+        enabled: yes
+
+      become: true
+
+
+
+    - name: Restart MySQL
+
+      service:
+
+        name: mysql
+
+        state: restarted
+
+        enabled: yes
+
+      become: true

@@ -1,0 +1,46 @@
+
+---
+- name: Install Apache
+  block:
+    - name: Install Apache package
+      apt:
+        name: apache2
+        state: present
+      become: true
+
+    - name: Ensure Apache service is started and enabled
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+      become: true
+
+    - name: Create document root directory
+      file:
+        path: /srv/www/default
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Copy sample index.php to document root
+      template:
+        src: index.php.j2
+        dest: /srv/www/default/index.php
+      become: true
+
+  rescue:
+    - name: Apache installation failed
+      debug:
+        msg: "Apache installation failed. Please check your internet connection or repository configuration."
+      when: "ansible_failed_result.results[0].msg is defined and 'Failed to fetch' in ansible_failed_result.results[0].msg"
+    - name: Apache service start failed
+      debug:
+        msg: "Apache service failed to start. Please check system logs for more details."
+      when: "ansible_failed_result.results[0].msg is defined and 'service' in ansible_failed_result.results[0].msg and 'failed' in ansible_failed_result.results[0].msg"
+  always:
+    - name: Ensure Apache configuration points to document root
+      template:
+        src: 000-default.conf.j2
+        dest: /etc/apache2/sites-available/000-default.conf
+      notify: restart_apache
+

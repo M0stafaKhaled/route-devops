@@ -1,0 +1,71 @@
+---
+- name: Install MySQL server package
+  vars:
+    mysql_root_password: "your_secure_password_here"
+  block:
+    - name: Install pip for Python 3
+      apt:
+        name: python3-pip
+        state: present
+      become: true
+
+    - name: Install PyMySQL package (required for MySQL module)
+      pip:
+        name: PyMySQL
+        state: present
+      become: true
+
+    - name: Install MySQL server
+      apt:
+        name: mysql-server
+        state: present
+      become: true
+
+    - name: Ensure MySQL service is started and enabled
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+      become: true
+
+    - name: Change MySQL root password (if required)
+      shell: |
+        mysql --user=root --password="" --execute="ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';"
+      become: true
+      when: mysql_root_password is defined
+
+    - name: Remove anonymous MySQL users
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      become: true
+      when: mysql_root_password is defined
+
+    - name: Remove MySQL test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      become: true
+      when: mysql_root_password is defined
+
+  rescue:
+    - name: MySQL installation failed
+      debug:
+        msg: "MySQL installation failed. Please check your internet connection or repository configuration."
+      when: "ansible_failed_result.results[0].msg is defined and 'Failed to fetch' in ansible_failed_result.results[0].msg"
+    - name: MySQL service start failed
+      debug:
+        msg: "MySQL service failed to start. Please check system logs for more details."
+      when: "ansible_failed_result.results[0].msg is defined and 'service' in ansible_failed_result.results[0].msg and 'failed' in ansible_failed_result.results[0].msg"
+
+  always:
+    - name: Ensure MySQL service is running
+      service:
+        name: mysql
+        state: started
+      become: true

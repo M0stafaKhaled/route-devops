@@ -1,0 +1,36 @@
+
+---
+- name: Update apt cache and install common packages
+  block:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      become: true
+    - name: Install common packages
+      apt:
+        name:
+          - curl
+          - git
+          - vim
+          - tree
+        state: present
+      become: true
+  rescue:
+    - name: Apt cache update failed
+      debug:
+        msg: "Apt cache update failed, please check your internet connection or repository configuration."
+      when: "ansible_failed_result.results[0].msg is defined and 'Failed to fetch' in ansible_failed_result.results[0].msg"
+    - name: Package installation failed
+      debug:
+        msg: "Failed to install common packages. Please check package names and system logs."
+      when: "ansible_failed_result.results[0].msg is defined and 'No package matching' in ansible_failed_result.results[0].msg"
+  always:
+    - name: Ensure basic directory structure exists
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      with_items:
+        - /srv/www
+        - /var/log/apache2
+      become: true
