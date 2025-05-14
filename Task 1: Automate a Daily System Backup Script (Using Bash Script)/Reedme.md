@@ -18,7 +18,7 @@ This script automates the backup of the `/etc` directory and sends email notific
 1. **Make the Script Executable**
 
    ```bash
-   chmod +x etc_backup.sh
+   chmod +x *
    ```
 
 2. **Run the Script**
