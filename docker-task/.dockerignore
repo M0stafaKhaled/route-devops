@@ -1,0 +1,11 @@
+# Ignore Docker-related files
+Dockerfile
+docker-compose.yml
+
+# Ignore logs
+*.log
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+*.swp

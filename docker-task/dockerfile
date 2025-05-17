@@ -1,0 +1,30 @@
+# -------- Stage 1: Build Stage --------
+    FROM python:3.11-alpine AS builder
+
+  
+    RUN apk add --no-cache build-base
+
+    WORKDIR /app
+    
+   
+    COPY requirements.txt .
+   
+    RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
+    
+    # -------- Stage 2: Runtime Stage --------
+    FROM python:3.11-alpine
+    
+
+    WORKDIR /app
+    
+   
+    COPY --from=builder /install /usr/local
+   
+    COPY . .
+    
+   
+    EXPOSE 8000
+    
+    # Run the app
+    CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    
